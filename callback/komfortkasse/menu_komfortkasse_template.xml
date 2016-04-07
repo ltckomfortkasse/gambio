@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<admin_menu>
+  <menugroup id="BOX_HEADING_CONFIGURATION">
+    <menuitem link="FILENAME_CONFIGURATION" link_param="gID={GID}" title="Komfortkasse" sort="9000"/>
+  </menugroup>
+  <menugroup id="BOX_HEADING_SHOP_SETTINGS">
+    <menuitem link="FILENAME_CONFIGURATION" link_param="gID={GID}" title="Komfortkasse" sort="9000"/>
+  </menugroup>
+</admin_menu>
