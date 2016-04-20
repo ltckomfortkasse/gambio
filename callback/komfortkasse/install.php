@@ -7,10 +7,11 @@
  * use these SQL statements to delete the configuration entries in order to re-install the plugin:
  * delete from configuration_group where configuration_group_title='Komfortkasse';
  * delete from configuration where configuration_key like 'KOMFORTKASSE%';
- * delete from language_section_phrases where phrase_name like 'KOMFORTKASSE%' or phrase_value='Komfortkasse';
+ * delete from language_phrases_edited where phrase_name like 'KOMFORTKASSE%';
  */
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
+//error_reporting(E_ALL);
+//ini_set('display_errors', '1');
+
 ?>
 <html>
 <head>
@@ -27,8 +28,9 @@ Note: if the installer exits before step <?php echo $steps; ?> without an error 
 Including files...
 
 <?php
-require_once ('../../includes/configure.php');
-require_once ('../../includes/application_top_callback.php');
+$basepath = explode('callback', $_SERVER['SCRIPT_FILENAME']) ;
+require_once ($basepath[0].'includes/configure.php');
+require_once (DIR_WS_INCLUDES.'application_top_callback.php');
 require_once ('Komfortkasse_Config.php');
 ?>
 
@@ -52,6 +54,7 @@ Determining Configuration Group ID...
 $config_group_q = xtc_db_query("SELECT configuration_group_id FROM " . TABLE_CONFIGURATION_GROUP . " where configuration_group_title='Komfortkasse'");
 $config_group_a = xtc_db_fetch_array($config_group_q);
 $config_group_id = $config_group_a ['configuration_group_id'];
+echo $config_group_id;
 if ($config_group_id) {
     echo 'Configuration group ID for "Komfortkasse" already exists, switching to update mode... ';
     $update = true;
@@ -160,6 +163,8 @@ if (file_exists($file)) {
                 insert_language($lang_section, 'KOMFORTKASSE_PUBLICKEY_DESC', 'Schluessel zur Verschluesselung der Daten die an Komfortkasse gesendet werden. Nicht aendern! Wird automatisch von Komfortkasse gesetzt.', $version);
                 insert_language($lang_section, 'KOMFORTKASSE_PRIVATEKEY_TITLE', 'Privater Schluessel', $version);
                 insert_language($lang_section, 'KOMFORTKASSE_PRIVATEKEY_DESC', 'Schluessel zur Entschluesselung der Daten die von Komfortkasse empfangen werden. Nicht aendern! Wird automatisch von Komfortkasse gesetzt.', $version);
+                insert_language($lang_section, 'BOX_CONFIGURATION_TITLE', 'Modulename', $version);
+                insert_language($lang_section, 'BOX_CONFIGURATION_DESC', 'Nicht aendern! Wird automatisch von Komfortkasse gesetzt.', $version);
                 insert_language($lang_section, 'BOX_CONFIGURATION_' . $config_group_id, 'Komfortkasse', $version);
             } else {
                 insert_language($lang_section, 'KOMFORTKASSE_ACTIVATE_EXPORT_TITLE', 'Export orders', $version);
@@ -200,6 +205,8 @@ if (file_exists($file)) {
                 insert_language($lang_section, 'KOMFORTKASSE_PUBLICKEY_DESC', 'Key for encrypting data that is sent to komfortkasse. Do not change! Is set automatically by komfortkasse.', $version);
                 insert_language($lang_section, 'KOMFORTKASSE_PRIVATEKEY_TITLE', 'Private key', $version);
                 insert_language($lang_section, 'KOMFORTKASSE_PRIVATEKEY_DESC', 'Key for decrypting data that is received from komfortkasse. Do not change! Is set automatically by komfortkasse.', $version);
+                insert_language($lang_section, 'BOX_CONFIGURATION_TITLE', 'Modulename', $version);
+                insert_language($lang_section, 'BOX_CONFIGURATION_DESC', 'Do not change! Is set automatically by komfortkasse.', $version);
                 insert_language($lang_section, 'BOX_CONFIGURATION_' . $config_group_id, 'Komfortkasse', $version);
             }
         }
@@ -318,6 +325,9 @@ $sort_order++;
 insert_configuration($config_group_id, Komfortkasse_Config::apikey, '', null, null, $sort_order);
 $sort_order++;
 
+insert_configuration($config_group_id, 'BOX_CONFIGURATION_'.$config_group_id, 'Komfortkasse', null, null, $sort_order);
+$sort_order++;
+
 ?>
 
 <br /> <br /> <b><?php echo ++$step;?>/<?php echo $steps;?></b>
@@ -340,7 +350,7 @@ if ($ok) {
 <br /> <br /> <b><?php echo ++$step;?>/<?php echo $steps;?></b>
 		Finished. Please <b><a
 			href="<?php echo (ENABLE_SSL ? HTTPS_SERVER : HTTP_SERVER).DIR_WS_CATALOG?>admin/clear_cache.php"
-			target="_new">empty the modules cache</a></b> and <a
+			target="_new">empty the modules- and text-cache</a></b> and <a
 		href="<?php echo (ENABLE_SSL ? HTTPS_SERVER : HTTP_SERVER).DIR_WS_CATALOG?>admin/configuration.php?gID=<?php echo $config_group_id; ?>"
 		target="_new">check the configuration</a>. </a><br /> (If you cannot
 		access this link, please login to your admin panel and open the
@@ -398,7 +408,7 @@ define('MODULE_PAYMENT_EUTRANSFER_TEXT_DESCRIPTION', '&lt;br /&gt;After your ord
 function insert_language($id, $phrase_name, $phrase_value, $version)
 {
     if ($version == '2.1') {
-        // prüfen ob wert besteht -> wenn ja, update, sonst insert
+        // prï¿½fen ob wert besteht -> wenn ja, update, sonst insert
         $where = "phrase_name like '" . $phrase_name . "' and language_section_id=" . $id;
         $check_s = xtc_db_query("SELECT language_section_id FROM language_section_phrases where " . $where);
         $check_a = xtc_db_fetch_array($check_s);
@@ -413,7 +423,7 @@ function insert_language($id, $phrase_name, $phrase_value, $version)
             xtc_db_perform('language_section_phrases', $sql_data_array);
         }
     } else if ($version == '2.3') {
-        // prüfen ob wert besteht -> wenn ja, update, sonst insert
+        // prï¿½fen ob wert besteht -> wenn ja, update, sonst insert
         $where = "phrase_name like '" . $phrase_name . "' and language_id=" . $id . " and section_name='configuration'";
         $check_s = xtc_db_query("SELECT language_id FROM language_phrases_edited where " . $where);
         $check_a = xtc_db_fetch_array($check_s);
@@ -423,8 +433,7 @@ function insert_language($id, $phrase_name, $phrase_value, $version)
             );
             xtc_db_perform('language_phrases_edited', $sql_data_array, 'update', $where);
         } else {
-            $sql_data_array = array ('language_id' => $id,'section_name' => 'configuration','phrase_name' => $phrase_name,'phrase_text' => $phrase_value,'date_modified' => date("Y-m-d H:i:s") 
-            );
+            $sql_data_array = array ('language_id' => $id,'section_name' => 'configuration','phrase_name' => $phrase_name,'phrase_text' => $phrase_value,'date_modified' => date("Y-m-d H:i:s") );
             xtc_db_perform('language_phrases_edited', $sql_data_array);
         }
     }
@@ -434,7 +443,8 @@ function insert_language($id, $phrase_name, $phrase_value, $version)
 
 function insert_configuration($config_group_id, $config_key, $config_value, $use_function, $set_function, $sort_order)
 {
-    // prüfen ob wert besteht -> wenn ja, update, sonst insert
+
+    // prï¿½fen ob wert besteht -> wenn ja, update, sonst insert
     $where = "configuration_group_id=" . $config_group_id . " and configuration_key='" . $config_key . "'";
     $check_s = xtc_db_query("SELECT * FROM " . TABLE_CONFIGURATION . " where " . $where);
     $check_a = xtc_db_fetch_array($check_s);

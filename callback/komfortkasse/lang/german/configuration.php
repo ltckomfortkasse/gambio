@@ -37,3 +37,5 @@ define('KOMFORTKASSE_PUBLICKEY_TITLE', 'Oeffentlicher Schluessel');
 define('KOMFORTKASSE_PUBLICKEY_DESC', 'Schluessel zur Verschluesselung der Daten die an Komfortkasse gesendet werden. Nicht aendern! Wird automatisch von Komfortkasse gesetzt.');
 define('KOMFORTKASSE_PRIVATEKEY_TITLE', 'Privater Schluessel');
 define('KOMFORTKASSE_PRIVATEKEY_DESC', 'Schluessel zur Entschluesselung der Daten die von Komfortkasse empfangen werden. Nicht aendern! Wird automatisch von Komfortkasse gesetzt.');
+define('KOMFORTKASSE_BOX_NAME_TITLE', 'Modulname');
+define('KOMFORTKASSE_BOX_NAME_DESC', 'Nicht aendern! Wird automatisch von Komfortkasse gesetzt.');

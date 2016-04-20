@@ -92,6 +92,7 @@ class Komfortkasse_Order
         $lang = $lang_a ['code'];
         
         $ret = array ();
+        $ret ['invoice_date'] = null;
         $ret ['number'] = $number;
         $ret ['date'] = date("d.m.Y", strtotime($order->info ['date_purchased']));
         $ret ['email'] = $order->customer ['email_address'];
@@ -116,6 +117,17 @@ class Komfortkasse_Order
         $ret ['billing_city'] = $order->billing ['city'];
         $ret ['billing_countrycode'] = $order->billing ['country_iso_2'];
         
+        // Rechnungsnummer und -datum
+        $invoice_date_q = xtc_db_query("SELECT date_added FROM " . TABLE_ORDERS_STATUS_HISTORY . " WHERE orders_id=" . $number ." AND orders_status_id = 149 ORDER BY orders_status_history_id");
+        $i = 0;
+        while ( $invoice_a = xtc_db_fetch_array($invoice_date_q) ) {
+        	if($i == 0){
+	        	$invoicedate = explode(' ',$invoice_a ['date_added']);
+	        	$ret ['invoice_date'] = date('d.m.Y', strtotime($invoicedate[0]));
+        	}
+        	$i++;
+        }
+
         $order_products = $order->products;
         foreach ($order_products as $product) {
             if ($product ['model']) {

@@ -37,3 +37,5 @@ define('KOMFORTKASSE_PUBLICKEY_TITLE', 'Public key');
 define('KOMFORTKASSE_PUBLICKEY_DESC', 'Key for encrypting data that is sent to komfortkasse. Do not change! Is set automatically by komfortkasse.');
 define('KOMFORTKASSE_PRIVATEKEY_TITLE', 'Private key');
 define('KOMFORTKASSE_PRIVATEKEY_DESC', 'Key for decrypting data that is received from komfortkasse. Do not change! Is set automatically by komfortkasse.');
+define('BOX_CONFIGURATION_TITLE', 'Modulname');
+define('BOX_CONFIGURATION_DESC', 'Do not change! Is set automatically by komfortkasse.');
