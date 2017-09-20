@@ -1,10 +1,10 @@
 <?php
 
-/** 
+/**
  * Komfortkasse
  * Config Class
- * 
- * @version 1.4.0.3-gambio
+ *
+ * @version 1.7.7-gambio
  */
 class Komfortkasse_Config {
 	const activate_export = 'KOMFORTKASSE_ACTIVATE_EXPORT';
@@ -26,14 +26,14 @@ class Komfortkasse_Config {
 	const status_open_cod = 'KOMFORTKASSE_STATUS_OPEN_COD';
 	const status_paid_cod = 'KOMFORTKASSE_STATUS_PAID_COD';
 	const status_cancelled_cod = 'KOMFORTKASSE_STATUS_CANCELLED_COD';
-	
+
 	// changing constants at runtime is necessary for init, therefore save them in cache
 	private static $cache = array ();
-	
+
 	public static function setConfig($constant_key, $value) {
-		
+
 		$sql_data_array = array (
-				'configuration_value' => $value 
+				'configuration_value' => $value
 		);
 		xtc_db_perform(TABLE_CONFIGURATION, $sql_data_array, 'update', "configuration_key='" . $constant_key . "'");
 		// cache leeren
@@ -47,7 +47,7 @@ class Komfortkasse_Config {
 			$config = $config_a ['configuration_value'];
 			self::$cache [$constant_key] = $config;
 		}
-		
+
 		return self::$cache [$constant_key];
 	}
 	public static function getRequestParameter($key) {
@@ -56,10 +56,24 @@ class Komfortkasse_Config {
 		else
 			return urldecode($_GET [$key]);
 	}
-	
+
 	public static function getVersion() {
 		include(DIR_FS_CATALOG . 'release_info.php');
 		return $gx_version;
 	}
+
+	/**
+	 * Output
+	 *
+	 * @param mixed $s Data to output
+	 */
+	public static function output($s)
+	{
+	    echo $s;
+	}
+
+	// end output()
+
+
 }
 ?>

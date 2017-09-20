@@ -2,8 +2,8 @@
 /**
  * Komfortkasse
  * Installer
- * @version 1.4.3.1-gambio (2.6.0.1)
- * 
+ * @version 1.7.7-gambio (3.6.0.2)
+ *
  * use these SQL statements to delete the configuration entries in order to re-install the plugin:
  * delete from configuration_group where configuration_group_title='Komfortkasse';
  * delete from configuration where configuration_key like 'KOMFORTKASSE%';
@@ -30,6 +30,8 @@ Including files...
 <?php
 $basepath = explode('callback', $_SERVER['SCRIPT_FILENAME']) ;
 require_once ($basepath[0].'includes/configure.php');
+if (file_exists(DIR_FS_CATALOG . 'gm/inc/gm_get_conf.inc.php'))
+    require_once (DIR_FS_CATALOG . 'gm/inc/gm_get_conf.inc.php');
 require_once (DIR_WS_INCLUDES.'application_top_callback.php');
 require_once ('Komfortkasse_Config.php');
 ?>
@@ -64,11 +66,11 @@ if (!$update) {
     $config_group_q1 = xtc_db_query("SELECT max(configuration_group_id) as maxid FROM " . TABLE_CONFIGURATION_GROUP);
     $config_group_a1 = xtc_db_fetch_array($config_group_q1);
     $config_group_id1 = $config_group_a1 ['maxid'] + 1;
-    
+
     $config_group_q2 = xtc_db_query("SELECT max(configuration_group_id) as maxid FROM " . TABLE_CONFIGURATION);
     $config_group_a2 = xtc_db_fetch_array($config_group_q2);
     $config_group_id2 = $config_group_a2 ['maxid'] + 1;
-    
+
     $config_group_id = max($config_group_id1, $config_group_id2);
 }
 
@@ -81,9 +83,9 @@ Checking Language additions...
 <?php
 $file = DIR_WS_LANGUAGES . $lng->language ['directory'] . '/admin/configuration.php';
 if (file_exists($file)) {
-    
+
     // Gambio 2.0
-    
+
     $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         if (strstr($line, Komfortkasse_Config::status_cancelled_cod) !== FALSE) {
@@ -99,19 +101,19 @@ if (file_exists($file)) {
         echo "ok";
     }
 } else {
-    
+
     // Gambio 2.1+
-    
+
 
     echo "updating phrases for languages: ";
-    
+
     foreach ($lng->catalog_languages as $iso => $l) {
         echo $iso . ' ';
-        
+
         $lang_table_q = xtc_db_query("SHOW TABLES LIKE 'language_phrases_edited'");
         $lang_table_a = xtc_db_fetch_array($lang_table_q);
         $version = empty($lang_table_a) ? '2.1' : '2.3';
-        
+
         if ($version == '2.1') {
             // Gambio 2.1-2.2
             $lang_section_q = xtc_db_query("SELECT language_section_id FROM language_sections where section_name like '%/admin/configuration.php' and language_id=" . $l ['id']);
@@ -121,9 +123,9 @@ if (file_exists($file)) {
             // Gambio 2.3+
             $lang_section = $l ['id'];
         }
-        
+
         if ($lang_section) {
-            
+
             if ($l ['code'] == 'de') {
                 insert_language($lang_section, 'KOMFORTKASSE_ACTIVATE_EXPORT_TITLE', 'Export Bestellungen', $version);
                 insert_language($lang_section, 'KOMFORTKASSE_ACTIVATE_EXPORT_DESC', 'Export von Bestellungen aktiv', $version);
@@ -211,7 +213,7 @@ if (file_exists($file)) {
             }
         }
     }
-    
+
     echo " - ok";
 }
 
@@ -248,12 +250,12 @@ if (!$found) {
 }
 
 ?>
-  
+
 <br /> <br /> <b><?php echo ++$step;?>/<?php echo $steps;?></b>
 Creating Configuration Group...
 <?php
 if (!$update) {
-    $sql_data_array = array ('configuration_group_id' => $config_group_id,'configuration_group_title' => 'Komfortkasse','configuration_group_description' => 'Komfortkasse Konfiguration','sort_order' => $config_group_id,'visible' => 1 
+    $sql_data_array = array ('configuration_group_id' => $config_group_id,'configuration_group_title' => 'Komfortkasse','configuration_group_description' => 'Komfortkasse Konfiguration','sort_order' => $config_group_id,'visible' => 1
     );
     xtc_db_perform(TABLE_CONFIGURATION_GROUP, $sql_data_array);
 } else {
@@ -412,13 +414,13 @@ function insert_language($id, $phrase_name, $phrase_value, $version)
         $where = "phrase_name like '" . $phrase_name . "' and language_section_id=" . $id;
         $check_s = xtc_db_query("SELECT language_section_id FROM language_section_phrases where " . $where);
         $check_a = xtc_db_fetch_array($check_s);
-        
+
         if ($check_a ['language_section_id']) {
-            $sql_data_array = array ('phrase_value' => $phrase_value 
+            $sql_data_array = array ('phrase_value' => $phrase_value
             );
             xtc_db_perform('language_section_phrases', $sql_data_array, 'update', $where);
         } else {
-            $sql_data_array = array ('language_section_id' => $id,'phrase_name' => $phrase_name,'phrase_value' => $phrase_value 
+            $sql_data_array = array ('language_section_id' => $id,'phrase_name' => $phrase_name,'phrase_value' => $phrase_value
             );
             xtc_db_perform('language_section_phrases', $sql_data_array);
         }
@@ -427,9 +429,9 @@ function insert_language($id, $phrase_name, $phrase_value, $version)
         $where = "phrase_name like '" . $phrase_name . "' and language_id=" . $id . " and section_name='configuration'";
         $check_s = xtc_db_query("SELECT language_id FROM language_phrases_edited where " . $where);
         $check_a = xtc_db_fetch_array($check_s);
-        
+
         if ($check_a ['language_id']) {
-            $sql_data_array = array ('phrase_text' => $phrase_value,'date_modified' => date("Y-m-d H:i:s") 
+            $sql_data_array = array ('phrase_text' => $phrase_value,'date_modified' => date("Y-m-d H:i:s")
             );
             xtc_db_perform('language_phrases_edited', $sql_data_array, 'update', $where);
         } else {
@@ -448,13 +450,13 @@ function insert_configuration($config_group_id, $config_key, $config_value, $use
     $where = "configuration_group_id=" . $config_group_id . " and configuration_key='" . $config_key . "'";
     $check_s = xtc_db_query("SELECT * FROM " . TABLE_CONFIGURATION . " where " . $where);
     $check_a = xtc_db_fetch_array($check_s);
-    
+
     if ($check_a ['configuration_id']) {
-        $sql_data_array = array ('use_function' => $use_function,'set_function' => $set_function,'sort_order' => $sort_order 
+        $sql_data_array = array ('use_function' => $use_function,'set_function' => $set_function,'sort_order' => $sort_order
         );
         xtc_db_perform(TABLE_CONFIGURATION, $sql_data_array, 'update', $where);
     } else {
-        $sql_data_array = array ('configuration_group_id' => $config_group_id,'configuration_key' => $config_key,'configuration_value' => $config_value,'use_function' => $use_function,'set_function' => $set_function,'sort_order' => $sort_order 
+        $sql_data_array = array ('configuration_group_id' => $config_group_id,'configuration_key' => $config_key,'configuration_value' => $config_value,'use_function' => $use_function,'set_function' => $set_function,'sort_order' => $sort_order
         );
         xtc_db_perform(TABLE_CONFIGURATION, $sql_data_array);
     }
