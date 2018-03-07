@@ -7,17 +7,17 @@
  * status: data type according to the shop system
  * delivery_ and billing_: _firstname, _lastname, _company, _street, _postcode, _city, _countrycode
  * products: an Array of item numbers
- * @version 1.4.0.3-gambio
+ * @version 1.7.8-gambio
  */
 
 class Komfortkasse_Order
 {
-    
+
     // return all order numbers that are "open" and relevant for transfer to kk
     public static function getOpenIDs()
     {
         $ret = array ();
-        
+
         if (Komfortkasse_Config::getConfig(Komfortkasse_Config::status_open) != '' && Komfortkasse_Config::getConfig(Komfortkasse_Config::payment_methods) != '') {
             $sql = "select orders_id from " . TABLE_ORDERS . " where orders_status in (" . Komfortkasse_Config::getConfig(Komfortkasse_Config::status_open) . ") and ( ";
             $paycodes = preg_split('/,/', Komfortkasse_Config::getConfig(Komfortkasse_Config::payment_methods));
@@ -29,12 +29,12 @@ class Komfortkasse_Order
             }
             $sql .= " )";
             $orders_q = xtc_db_query($sql);
-            
+
             while ( $orders_a = xtc_db_fetch_array($orders_q) ) {
                 $ret [] = $orders_a ['orders_id'];
             }
         }
-        
+
         if (Komfortkasse_Config::getConfig(Komfortkasse_Config::status_open_invoice) != '' && Komfortkasse_Config::getConfig(Komfortkasse_Config::payment_methods_invoice) != '') {
             $sql = "select orders_id from " . TABLE_ORDERS . " where orders_status in (" . Komfortkasse_Config::getConfig(Komfortkasse_Config::status_open_invoice) . ") and ( ";
             $paycodes = preg_split('/,/', Komfortkasse_Config::getConfig(Komfortkasse_Config::payment_methods_invoice));
@@ -46,12 +46,12 @@ class Komfortkasse_Order
             }
             $sql .= " )";
             $orders_q = xtc_db_query($sql);
-            
+
             while ( $orders_a = xtc_db_fetch_array($orders_q) ) {
                 $ret [] = $orders_a ['orders_id'];
             }
         }
-        
+
         if (Komfortkasse_Config::getConfig(Komfortkasse_Config::status_open_cod) != '' && Komfortkasse_Config::getConfig(Komfortkasse_Config::payment_methods_cod) != '') {
             $sql = "select orders_id from " . TABLE_ORDERS . " where orders_status in (" . Komfortkasse_Config::getConfig(Komfortkasse_Config::status_open_cod) . ") and ( ";
             $paycodes = preg_split('/,/', Komfortkasse_Config::getConfig(Komfortkasse_Config::payment_methods_cod));
@@ -63,34 +63,34 @@ class Komfortkasse_Order
             }
             $sql .= " )";
             $orders_q = xtc_db_query($sql);
-            
+
             while ( $orders_a = xtc_db_fetch_array($orders_q) ) {
                 $ret [] = $orders_a ['orders_id'];
             }
         }
-        
+
         return $ret;
-    
+
     }
 
 
     public static function getOrder($number)
     {
         require_once DIR_WS_CLASSES . 'order.php';
-        
+
         $order = new order($number);
         if (empty($number) || empty($order)) {
             return null;
         }
-        
+
         $total_q = xtc_db_query("SELECT value FROM " . TABLE_ORDERS_TOTAL . " where orders_id=" . $number . " and class='ot_total'");
         $total_a = xtc_db_fetch_array($total_q);
         $total = $total_a ['value'];
-        
-        $lang_q = xtc_db_query("SELECT l.code, o.gm_orders_code FROM " . TABLE_ORDERS . " o join " . TABLE_LANGUAGES . " l on l.directory=o.language where o.orders_id=" . $number);
+
+        $lang_q = xtc_db_query("SELECT l.code, o.gm_orders_code, o.orders_status FROM " . TABLE_ORDERS . " o join " . TABLE_LANGUAGES . " l on l.directory=o.language where o.orders_id=" . $number);
         $lang_a = xtc_db_fetch_array($lang_q);
         $lang = $lang_a ['code'];
-        
+
         $ret = array ();
         $ret ['invoice_date'] = null;
         $ret ['number'] = $number;
@@ -116,7 +116,8 @@ class Komfortkasse_Order
         $ret ['billing_postcode'] = $order->billing ['postcode'];
         $ret ['billing_city'] = $order->billing ['city'];
         $ret ['billing_countrycode'] = $order->billing ['country_iso_2'];
-        
+        $ret ['status'] = $lang_a ['orders_status'];
+
         // Rechnungsnummer und -datum
         $invoice_date_q = xtc_db_query("SELECT date_added FROM " . TABLE_ORDERS_STATUS_HISTORY . " WHERE orders_id=" . $number ." AND orders_status_id = 149 ORDER BY orders_status_history_id");
         $i = 0;
@@ -136,13 +137,13 @@ class Komfortkasse_Order
                 $ret ['products'] [] = $product ['name'];
             }
         }
-        
+
         if ($lang_a ['gm_orders_code'] != '') {
             $ret ['invoice_number'] [] = $lang_a ['gm_orders_code'];
         }
-        
+
         return $ret;
-    
+
     }
 
 
@@ -150,11 +151,11 @@ class Komfortkasse_Order
     {
         xtc_db_query("update " . TABLE_ORDERS . " set orders_status = '" . xtc_db_input($status) . "', last_modified = now() where orders_id = '" . xtc_db_input($order ['number']) . "'");
         xtc_db_query("insert into " . TABLE_ORDERS_STATUS_HISTORY . " (orders_id, orders_status_id, date_added, customer_notified, comments) values ('" . xtc_db_input($order ['number']) . "', '" . xtc_db_input($status) . "', now(), '0', 'Komfortkasse ID " . $callbackid . "')");
-    
+
     }
 
 
-    
+
     public static function getInvoicePdfPrepare()
     {
         global $kkdir;
@@ -163,7 +164,7 @@ class Komfortkasse_Order
         define('SUPPRESS_REDIRECT', true);
         require_once('includes/application_top.php');
     }
-    
+
     public static function getInvoicePdf($invoicenumber, $order_id=null)
     {
         if ($order_id == null) {
@@ -174,23 +175,23 @@ class Komfortkasse_Order
             $order_q = xtc_db_query("SELECT o.orders_id, l.code as languages_code, l.languages_id, o.language FROM " . TABLE_ORDERS . " o join " . TABLE_LANGUAGES . " l on l.directory=o.language where o.orders_id='" . $order_id . "'");
             $order_a = xtc_db_fetch_array($order_q);
         }
-        
+
         if ($order_id) {
             $_GET['oID'] = $order_id;
             $_GET['type'] = 'invoice';
-            
+
             $coo_lang_file_master = MainFactory::create_object('LanguageTextManager', array(), true);
             @$coo_lang_file_master->init_section('lang/'.$order_a['language'].'/admin/gm_pdf_order.php', $order_a['languages_id']);
             $_SESSION['language_code'] = $order_a['languages_code'];
             $_SESSION['language'] = $order_a['language'];
             $_SESSION['languages_id'] = $order_a['languages_id'];
             require(DIR_FS_LANGUAGES . $_SESSION['language'] . '/' . $_SESSION['language'] . '.php');
-            
+
             global $kkdir;
             chdir($kkdir);
             require_once ('../../admin/gm_pdf_order.php');
         }
-    
+
     }
 }
 
